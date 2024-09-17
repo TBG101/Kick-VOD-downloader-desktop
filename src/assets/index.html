@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="./assets/style.css" />
+    <script defer src="./render.js"></script>
+    <title>Kick VOD Downloader</title>
+  </head>
+
+  <body>
+    <div class="left-part">
+      <ul>
+        <li>VOD Downloader</li>
+        <li>More Coming Soon</li>
+      </ul>
+    </div>
+    <div class="right-part">
+      <div class="search-container">
+        <input id="video-url" type="text" placeholder="Enter the VOD URL" />
+        <button id="fetch-data-btn" onclick="{()=>{}}">Fetch Data</button>
+      </div>
+      <div class="data-container">
+        <!-- CustomData left side -->
+        <div class="custom-data">
+          <div class="column">
+            <div id="image">No Media 😔</div>
+            <div id="streamer">Streamer:</div>
+            <div id="title">Title:</div>
+            <div id="date">Date:</div>
+            <div id="duration">Duration:</div>
+          </div>
+        </div>
+        <!-- CustomData right side -->
+        <div class="custom-data">
+          <div
+            style="
+              padding-left: 20px;
+              padding-top: 10px;
+              color: whitesmoke;
+              width: 100%;
+              height: 100%;
+            "
+          >
+            <div class="column" style="align-items: start">
+              <div class="row">
+                <label for="quality" style="width: 60px">Quality:</label>
+                <select id="quality-select">
+                  <option value="source">Source</option>
+                  <option value="1080p60">1080p60</option>
+                  <option value="1080p30">1080p30</option>
+                  <option value="720p60">720p60</option>
+                  <option value="720p30">720p30</option>
+                  <option value="480p30">480p30</option>
+                  <option value="360p30">360p30</option>
+                  <option value="160p30">160p30</option>
+                </select>
+              </div>
+              <div class="row">
+                <label for="start" style="width: 60px"> Start:</label>
+                <input type="text" id="start-time" placeholder="hh:mm:ss" />
+              </div>
+              <div class="row">
+                <label for="end" style="width: 60px">End:</label>
+                <input type="text" id="end-time" placeholder="hh:mm:ss" />
+              </div>
+              <div style="flex-grow: 2"></div>
+              <button id="download-btn">Download</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
