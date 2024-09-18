@@ -1,10 +1,45 @@
-const fetchVideoDate = document.getElementById("fetch-data-btn");
-const downloadVideo = document.getElementById("download-btn");
-const videoUrl = document.getElementById("video-url");
 const { ipcRenderer } = require("electron");
 
-fetchVideoDate.addEventListener("click", () => {
-  console.log("yes");
+const fetchVideoData = document.getElementById("fetch-data-btn");
+const downloadVideo = document.getElementById("download-btn");
+const videoUrl = document.getElementById("video-url");
+const qualitySelector = document.getElementById("quality-select");
 
-  ipcRenderer.send("fetch-data", videoUrl.value);
+const startTime = document.getElementById("start-time");
+const endTime = document.getElementById("end-time");
+
+let currentVideo = {};
+
+fetchVideoData.addEventListener("click", () => {
+  ipcRenderer.invoke("getVideoData", videoUrl.value).then((data) => {
+    console.log(data);
+    currentVideo = data;
+    document.getElementById(
+      "image-container"
+    ).innerHTML = `<img id="image" src="${data.thumbnail}" alt="thumbnail" />`;
+
+    document.getElementById("title").innerText = "Title: " + data.title;
+    document.getElementById("streamer").innerText =
+      "Streamer: " + data.streamer;
+    document.getElementById("date").innerText = "Date: " + data.streamDate;
+    document.getElementById("duration").innerText =
+      "Duration: " + Date(data.lenght);
+
+    qualitySelector.innerHTML = '<option value="source">Source</option>';
+    for (let i = 0; i < data.resolutions.length; i++) {
+      qualitySelector.innerHTML += `<option value="${data.resolutions[i]}">${data.resolutions[i]}</option>`;
+    }
+    qualitySelector.removeAttribute("disabled");
+  });
+});
+
+downloadVideo.addEventListener("click", () => {
+  console.log(currentVideo);
+
+  ipcRenderer.invoke("downloadVideo", {
+    video: currentVideo,
+    quality: qualitySelector.value,
+    startTime: startTime.value,
+    endTime: endTime.value,
+  });
 });

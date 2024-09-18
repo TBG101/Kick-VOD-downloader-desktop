@@ -21,8 +21,6 @@ export class VideoQueeModel {
     return VideoQueeModel.instance;
   }
 
-
-
   private constructor() {
     this.Quee = [];
     this.isDonwloading = false;
@@ -47,13 +45,18 @@ export class VideoQueeModel {
     return this.Quee.find((vid) => vid.video.url === url);
   }
 
-  async StartQueeDonwloading(selectedQuality: string) {
+  async StartQueeDonwloading() {
+    console.log("Starting Quee");
+
     if (this.isDonwloading) return;
     this.isDonwloading = true;
     while (this.Quee.length > 0) {
-      const vid = this.Quee.pop();
+
+      const vid = this.Quee[this.Quee.length - 1];
+      console.log(vid);
       if (!vid) return;
       await vid.video.DonwloadVod(vid.quality, vid.start, vid.end);
+      return;
     }
     this.isDonwloading = false;
   }

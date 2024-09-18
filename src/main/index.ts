@@ -1,10 +1,10 @@
 import { app, BrowserWindow, ipcMain } from 'electron';
 import { VideoController } from '../controller/videoController';
 import { Video } from '../models/videoModel';
+import { VideoQueeModel } from '../models/VideoQueeModel';
 
 let video = new Video("https://kick.com/destrox88x/videos/9e3f97a6-a693-4877-9c29-ea1ea027be89")
 
-let controler = new VideoController();
 
 
 const createWindow = () => {
@@ -25,13 +25,12 @@ const createWindow = () => {
     },
   });
 
+  let controler = new VideoController(ipcMain);
+  let queeController = VideoQueeModel.getInstance();
 
-
-  win.setAlwaysOnTop(true, "screen-saver", 1);
-  win.loadURL("http://127.0.0.1:5500/KickVodDownloaderWindows/index.html");
+  win.loadURL("http://127.0.0.1:5500/src/assets/index.html");
   win.webContents.openDevTools();
 
-  win.webContents.send("message", "Hello from main process!");
 };
 
 app.whenReady().then(() => {

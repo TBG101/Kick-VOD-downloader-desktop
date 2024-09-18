@@ -1,6 +1,6 @@
-export const exctractResolutionFromMaster = (intputString: String) => {
+export const exctractResolutionFromMaster = (intputString: string) => {
   const lines = intputString.split("\n");
-  let outputQuality: String[] = [];
+  let outputQuality: string[] = [];
 
   lines.forEach((element) => {
     if (element.includes("/playlist.m3u8")) {
