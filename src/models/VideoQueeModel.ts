@@ -47,13 +47,14 @@ export class VideoQueeModel {
 
   async StartQueeDonwloading() {
     console.log("Starting Quee");
-
     if (this.isDonwloading) return;
+    
     this.isDonwloading = true;
     while (this.Quee.length > 0) {
 
-      const vid = this.Quee[this.Quee.length - 1];
-      console.log(vid);
+      const vid = this.Quee.shift();
+      console.log("video is " + vid);
+
       if (!vid) return;
       await vid.video.DonwloadVod(vid.quality, vid.start, vid.end);
       return;

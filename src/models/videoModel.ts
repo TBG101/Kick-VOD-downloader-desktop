@@ -1,6 +1,17 @@
 import fs from "fs";
 import axios from "axios";
-import { exctractResolutionFromMaster } from "../utils/utils";
+import { exctractResolutionFromMaster, getCurrentDir, checkFolderName } from "../utils/utils";
+
+interface tsFile {
+  lenght: number;
+  name: string;
+}
+
+interface getPlaylistData {
+  length: number;
+  playlist: tsFile[];
+}
+
 
 export class Video {
   url: String;
@@ -29,6 +40,33 @@ export class Video {
     this.thumbnail = "";
   }
 
+  async fromJson(jsonData: {
+    [key: string]: any;
+  }) {
+
+    this.title = jsonData.livestream.session_title;
+    this.streamer = jsonData.livestream.channel.slug;
+    this.thumbnail = jsonData.livestream.thumbnail;
+    this.streamDate = jsonData.livestream.created_at.split(" ")[0];
+
+    this.lenght = jsonData.livestream.duration
+    this.resolutions = await this.getVideoQuality(jsonData.source) ?? [];
+  }
+
+  toJson() {
+    return {
+      url: this.url,
+      title: this.title,
+      streamer: this.streamer,
+      lenght: this.lenght,
+      streamDate: this.streamDate,
+      // VideoData: this.VideoData,
+      resolutions: this.resolutions,
+      downloading: this.downloading,
+      donwloadUrl: this.donwloadUrl,
+      thumbnail: this.thumbnail,
+    };
+  }
 
   async getVideoData(): Promise<{ [key: string]: any }> {
     // this will get the vod info from the kick api and add it to the video object and return it as well
@@ -42,6 +80,12 @@ export class Video {
       try {
         const response = await fetch(api_url, {
           credentials: "include",
+          method: "GET",
+          headers: {
+            "User-Agent": "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Mobile Safari/537.36 Edg/127.0.0.0",
+            "Referer": "https://kick.com/",
+            "Origin": "https://kick.com",
+          }
         })
         if (response.ok) {
           console.log(response.status);
@@ -82,13 +126,25 @@ export class Video {
 
   async getVideoPlaylist(selectedQuality: String) {
     // Video: Video Class Object
+    console.log("download url is" + this.donwloadUrl);
+
     this.donwloadUrl = this.VideoData.source.replace(
       RegExp("master.[^/]*$"),
       `${selectedQuality}/`
     );
 
     try {
-      const response = await fetch(this.donwloadUrl + "playlist.m3u8");
+      const response = await fetch(this.donwloadUrl + "playlist.m3u8",
+        {
+          method: "GET",
+          headers: {
+            "User-Agent": "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Mobile Safari/537.36 Edg/127.0.0.0",
+            "Referer": "https://kick.com/",
+            "Origin": "https://kick.com",
+          },
+        }
+
+      );
       if (response.ok) {
         const data = await response.text();
         return data.split("\n");
@@ -101,63 +157,76 @@ export class Video {
     }
   }
 
+  private getTsFiles(playlist: string[], start = 0, end = 0): getPlaylistData {
+    const tsList: tsFile[] = [];
+    let currentLenght = 0;
+    for (let i = 0; i < playlist.length; i++) {
+      if (playlist[i].includes("#EXTINF:") === false) continue;
+      // get the number.ts
+      const tsLenght = playlist[i].replaceAll("#EXTINF:", "").replaceAll(",", "");
 
-  toJson() {
-    return {
-      url: this.url,
-      title: this.title,
-      streamer: this.streamer,
-      lenght: this.lenght,
-      streamDate: this.streamDate,
-      // VideoData: this.VideoData,
-      resolutions: this.resolutions,
-      downloading: this.downloading,
-      donwloadUrl: this.donwloadUrl,
-      thumbnail: this.thumbnail,
+      currentLenght += parseFloat(tsLenght) * 1000;
+
+      // get ts files between time stamp specified
+      if(currentLenght > end && end !== 0) break;
+      if(start > currentLenght) continue;
+      
+      const tsFileNumber = playlist[i + 1];
+      tsList.push({ lenght: parseFloat(tsLenght), name: tsFileNumber });
+
+    }
+    const data: getPlaylistData = {
+      length: currentLenght,
+      playlist: tsList,
     };
+    return data;
   }
 
-  async fromJson(jsonData: {
-    [key: string]: any;
-  }) {
+  // download the ts file from the server
+  async downloadTS(downloadBaseURL: string, ts: tsFile, baseSavePath: string) {
+    console.log(downloadBaseURL + "/" + ts.name);
 
-    this.title = jsonData.livestream.session_title;
-    this.streamer = jsonData.livestream.channel.slug;
-    this.thumbnail = jsonData.livestream.thumbnail;
-    this.streamDate = jsonData.livestream.created_at.split(" ")[0];
-
-    this.lenght = jsonData.livestream.duration
-    this.resolutions = await this.getVideoQuality(jsonData.source) ?? [];
-
-
-
-  }
-
-
-
-  async downloadTS(downloadURL: string, tsNumber: string) {
-    await axios
-      .get(downloadURL + "/" + tsNumber, {
-        responseType: "stream",
-      })
-      .then((response) => {
-        response.data.pipe(fs.createWriteStream(tsNumber + ".ts"));
-        // wait till the download finishes
-        response.data.on("end", () => {
-          console.log("Downloaded " + tsNumber);
-        });
+    await fetch(downloadBaseURL + ts.name, {
+      method: "GET",
+      headers: {
+        "User-Agent": "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Mobile Safari/537.36 Edg/127.0.0.0",
+        "Referer": "https://kick.com/",
+        "Origin": "https://kick.com",
+      },
+    }).then((response) => {
+      const dest = fs.createWriteStream(baseSavePath + ts.name);
+      const { pipeline } = require('stream');
+      pipeline(response.body, dest, (err: any) => {
+        if (err) {
+          console.error('Pipeline failed.', err);
+        } else {
+          console.log('Pipeline succeeded.');
+        }
       });
-  }
+    });
 
+  }
   async DonwloadVod(selectedQuality: string, start: number = 0, end: number = 0) {
     // this will download the vod
     // Video: Video Class Object
-    const playlist = await this.getVideoPlaylist(selectedQuality);
-    console.log(playlist);
 
-    if (playlist === null) {
-      return;
+    const FolderName = checkFolderName(this.streamer + "_" + this.title);
+
+    const baseSavePath = await getCurrentDir() + "/" + FolderName + "/";
+    fs.mkdirSync(baseSavePath);
+    const playlistData = await this.getVideoPlaylist(selectedQuality);
+    console.log("playlist is" + playlistData);
+
+    if (!playlistData) return;
+
+    const { playlist, length } = this.getTsFiles(playlistData,start,end);
+
+    // start downloadinng all the ts files
+    for (let i = 0; i < playlist.length; i++) {
+
+      await this.downloadTS(this.donwloadUrl, playlist[i], baseSavePath);
     }
   }
+
 
 }

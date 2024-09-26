@@ -10,7 +10,11 @@ const endTime = document.getElementById("end-time");
 
 let currentVideo = {};
 
-fetchVideoData.addEventListener("click", () => {
+fetchVideoData.addEventListener("click", fetchVideoData);
+
+downloadVideo.addEventListener("click", downloadVideoFile);
+
+function fetchVideoData() {
   ipcRenderer.invoke("getVideoData", videoUrl.value).then((data) => {
     console.log(data);
     currentVideo = data;
@@ -31,15 +35,16 @@ fetchVideoData.addEventListener("click", () => {
     }
     qualitySelector.removeAttribute("disabled");
   });
-});
+}
 
-downloadVideo.addEventListener("click", () => {
+function downloadVideoFile() {
   console.log(currentVideo);
 
+  // TODO add validation for start and end time
   ipcRenderer.invoke("downloadVideo", {
     video: currentVideo,
     quality: qualitySelector.value,
     startTime: startTime.value,
     endTime: endTime.value,
   });
-});
+}
