@@ -24,6 +24,8 @@ export const checkFolderName = (folderName: string) => {
 
 // parse time of hh:mm:ss to milliseconds
 export const parseTimeToMs = (time: string) => {
+  console.log(time);
+  
   const timeArray = time.split(":");
   return parseInt(timeArray[0]) * 60 * 60 * 1000 + parseInt(timeArray[1]) * 60 * 1000 + parseInt(timeArray[2]) * 1000;
 }

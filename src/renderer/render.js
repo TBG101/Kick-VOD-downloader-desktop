@@ -1,21 +1,34 @@
 const { ipcRenderer } = require("electron");
 
-const fetchVideoData = document.getElementById("fetch-data-btn");
-const downloadVideo = document.getElementById("download-btn");
-const videoUrl = document.getElementById("video-url");
-const qualitySelector = document.getElementById("quality-select");
-
+const fetchVideoDataElement = document.getElementById("fetch-data-btn");
+const downloadVideoElement = document.getElementById("download-btn");
+const videoUrlElement = document.getElementById("video-url");
+const qualitySelectorElement = document.getElementById("quality-select");
+const progressPercentageElement = document.getElementById(
+  "progress-percentage"
+);
 const startTime = document.getElementById("start-time");
 const endTime = document.getElementById("end-time");
 
+const progressFill = document.querySelector(".progress-fill");
+
 let currentVideo = {};
 
-fetchVideoData.addEventListener("click", fetchVideoData);
+fetchVideoDataElement.addEventListener("click", fetchVideoData);
 
-downloadVideo.addEventListener("click", downloadVideoFile);
+downloadVideoElement.addEventListener("click", downloadVideoFile);
+
+listenForProgressUpdates();
+
+function listenForProgressUpdates() {
+  ipcRenderer.on("updateProgress", (event, progress) => {
+    console.log(progress);
+    updateProgress(progress);
+  });
+}
 
 function fetchVideoData() {
-  ipcRenderer.invoke("getVideoData", videoUrl.value).then((data) => {
+  ipcRenderer.invoke("getVideoData", videoUrlElement.value).then((data) => {
     console.log(data);
     currentVideo = data;
     document.getElementById(
@@ -29,22 +42,32 @@ function fetchVideoData() {
     document.getElementById("duration").innerText =
       "Duration: " + Date(data.lenght);
 
-    qualitySelector.innerHTML = '<option value="source">Source</option>';
+    qualitySelectorElement.innerHTML = '<option value="source">Source</option>';
     for (let i = 0; i < data.resolutions.length; i++) {
-      qualitySelector.innerHTML += `<option value="${data.resolutions[i]}">${data.resolutions[i]}</option>`;
+      qualitySelectorElement.innerHTML += `<option value="${data.resolutions[i]}">${data.resolutions[i]}</option>`;
     }
-    qualitySelector.removeAttribute("disabled");
+    qualitySelectorElement.removeAttribute("disabled");
   });
 }
 
 function downloadVideoFile() {
   console.log(currentVideo);
-
-  // TODO add validation for start and end time
-  ipcRenderer.invoke("downloadVideo", {
+  const data = {
     video: currentVideo,
-    quality: qualitySelector.value,
+    quality: qualitySelectorElement.value,
     startTime: startTime.value,
     endTime: endTime.value,
-  });
+  };
+  console.log("Data to send from UI: ", data);
+
+  // TODO add validation for start and end time
+  ipcRenderer.invoke("downloadVideo", data);
+}
+
+function updateProgress(progress) {
+  progressFill.style.width = `${progress}%`;
+  progressPercentageElement.innerText = `${progress}%`;
+  if (progress === 100) {
+    progressFill.style.backgroundColor = "green";
+  }
 }

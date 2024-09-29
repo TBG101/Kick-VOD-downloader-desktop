@@ -3,9 +3,6 @@ import { VideoController } from '../controller/videoController';
 import { Video } from '../models/videoModel';
 import { VideoQueeModel } from '../models/VideoQueeModel';
 
-let video = new Video("https://kick.com/destrox88x/videos/9e3f97a6-a693-4877-9c29-ea1ea027be89")
-
-
 
 const createWindow = () => {
   const win = new BrowserWindow({
@@ -25,7 +22,7 @@ const createWindow = () => {
     },
   });
 
-  let controler = new VideoController(ipcMain);
+  let controler = new VideoController(ipcMain,win);
   let queeController = VideoQueeModel.getInstance();
 
   win.loadURL("http://127.0.0.1:5500/src/assets/index.html");

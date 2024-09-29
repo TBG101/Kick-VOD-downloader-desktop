@@ -1,6 +1,8 @@
 import fs from "fs";
 import axios from "axios";
 import { exctractResolutionFromMaster, getCurrentDir, checkFolderName } from "../utils/utils";
+import { BrowserWindow, ipcMain } from "electron";
+const { pipeline } = require('stream');
 
 interface tsFile {
   lenght: number;
@@ -26,8 +28,9 @@ export class Video {
   downloading: boolean;
   donwloadUrl: string;
   thumbnail: string;
+  browserWindow: BrowserWindow;
 
-  constructor(url: String) {
+  constructor(url: String, browserWindow: BrowserWindow) {
     this.url = url;
     this.title = "";
     this.streamer = "";
@@ -38,6 +41,7 @@ export class Video {
     this.downloading = false;
     this.donwloadUrl = "";
     this.thumbnail = "";
+    this.browserWindow = browserWindow;
   }
 
   async fromJson(jsonData: {
@@ -70,6 +74,8 @@ export class Video {
 
   async getVideoData(): Promise<{ [key: string]: any }> {
     // this will get the vod info from the kick api and add it to the video object and return it as well
+    console.log("getting vod data");
+
     return new Promise(async (resolve, reject) => {
       const split_url = this.url.split("/");
       const id = split_url[split_url.length - 1];
@@ -168,9 +174,9 @@ export class Video {
       currentLenght += parseFloat(tsLenght) * 1000;
 
       // get ts files between time stamp specified
-      if(currentLenght > end && end !== 0) break;
-      if(start > currentLenght) continue;
-      
+      if (currentLenght > end && end !== 0) break;
+      if (start >= currentLenght) continue;
+
       const tsFileNumber = playlist[i + 1];
       tsList.push({ lenght: parseFloat(tsLenght), name: tsFileNumber });
 
@@ -186,26 +192,30 @@ export class Video {
   async downloadTS(downloadBaseURL: string, ts: tsFile, baseSavePath: string) {
     console.log(downloadBaseURL + "/" + ts.name);
 
-    await fetch(downloadBaseURL + ts.name, {
+    const response = await fetch(downloadBaseURL + ts.name, {
       method: "GET",
       headers: {
         "User-Agent": "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Mobile Safari/537.36 Edg/127.0.0.0",
         "Referer": "https://kick.com/",
         "Origin": "https://kick.com",
       },
-    }).then((response) => {
-      const dest = fs.createWriteStream(baseSavePath + ts.name);
-      const { pipeline } = require('stream');
+    });
+    const dest = fs.createWriteStream(baseSavePath + ts.name);
+
+    await new Promise<void>((resolve, reject) => {
       pipeline(response.body, dest, (err: any) => {
         if (err) {
           console.error('Pipeline failed.', err);
+          reject
         } else {
           console.log('Pipeline succeeded.');
+          resolve();
         }
       });
     });
 
   }
+
   async DonwloadVod(selectedQuality: string, start: number = 0, end: number = 0) {
     // this will download the vod
     // Video: Video Class Object
@@ -219,12 +229,20 @@ export class Video {
 
     if (!playlistData) return;
 
-    const { playlist, length } = this.getTsFiles(playlistData,start,end);
+    const { playlist, length } = this.getTsFiles(playlistData, start, end);
+    console.log("playlist is" + playlist);
 
+    let finishedTs = 0;
     // start downloadinng all the ts files
     for (let i = 0; i < playlist.length; i++) {
+      await this.downloadTS(this.donwloadUrl, playlist[i], baseSavePath).then(() => {
+        finishedTs++;
+        console.log("number of ts finisehd ", finishedTs, "percentage is : ", (finishedTs / playlist.length) * 100);
+        // send data to UI.
+        this.browserWindow.webContents.send("updateProgress", (finishedTs / playlist.length) * 100);
 
-      await this.downloadTS(this.donwloadUrl, playlist[i], baseSavePath);
+
+      });
     }
   }
 
