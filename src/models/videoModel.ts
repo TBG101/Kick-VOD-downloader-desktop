@@ -1,6 +1,6 @@
 import fs from "fs";
 import axios from "axios";
-import { exctractResolutionFromMaster, getCurrentDir, checkFolderName } from "../utils/utils";
+import { exctractResolutionFromMaster, getCurrentDir, checkFolderName, mergeAllTsFiles, convertToMp4, deleteAllTs } from "../utils/utils";
 import { BrowserWindow, ipcMain } from "electron";
 const { pipeline } = require('stream');
 
@@ -96,6 +96,7 @@ export class Video {
         if (response.ok) {
           console.log(response.status);
           const responseJson = await response.json();
+          this.browserWindow.webContents.send("updateProgress", 0);
           return resolve(responseJson);
         }
         else {
@@ -233,18 +234,26 @@ export class Video {
     console.log("playlist is" + playlist);
 
     let finishedTs = 0;
+    let currentQuee = 0;
     // start downloadinng all the ts files
     for (let i = 0; i < playlist.length; i++) {
-      await this.downloadTS(this.donwloadUrl, playlist[i], baseSavePath).then(() => {
+      while (currentQuee >= 10) {
+        await setTimeout(() => {
+
+        }, 250);
+      }
+
+      this.downloadTS(this.donwloadUrl, playlist[i], baseSavePath).then(() => {
         finishedTs++;
         console.log("number of ts finisehd ", finishedTs, "percentage is : ", (finishedTs / playlist.length) * 100);
         // send data to UI.
         this.browserWindow.webContents.send("updateProgress", (finishedTs / playlist.length) * 100);
-
-
+        currentQuee--;
       });
     }
+
+    mergeAllTsFiles(baseSavePath);
+    convertToMp4(baseSavePath);
+    deleteAllTs(baseSavePath);
   }
-
-
 }
