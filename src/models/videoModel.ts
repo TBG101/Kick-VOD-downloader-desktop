@@ -235,23 +235,25 @@ export class Video {
 
     let finishedTs = 0;
     let currentQuee = 0;
+    let currentQueePromises: Promise<void>[] = []
     // start downloadinng all the ts files
     for (let i = 0; i < playlist.length; i++) {
       while (currentQuee >= 10) {
-        await setTimeout(() => {
-
-        }, 250);
+        await setTimeout(() => { }, 250);
       }
 
-      this.downloadTS(this.donwloadUrl, playlist[i], baseSavePath).then(() => {
+      let downloadPromise = this.downloadTS(this.donwloadUrl, playlist[i], baseSavePath).then(() => {
         finishedTs++;
         console.log("number of ts finisehd ", finishedTs, "percentage is : ", (finishedTs / playlist.length) * 100);
         // send data to UI.
         this.browserWindow.webContents.send("updateProgress", (finishedTs / playlist.length) * 100);
         currentQuee--;
       });
+      currentQueePromises.push(downloadPromise);
     }
 
+    // await all the download promises to finish
+    await Promise.all(currentQueePromises)
     mergeAllTsFiles(baseSavePath);
     convertToMp4(baseSavePath);
     deleteAllTs(baseSavePath);
