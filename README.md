@@ -20,16 +20,14 @@ Kick.com Video Downloader is a cross-platform desktop application built with [El
 1. **Clone the repository**
 
    ```bash
-   git clone https://github.com/yourusername/kickcom-video-downloader.git
-   cd kickcom-video-downloader
-
+   git clone https://github.com/TBG101/Kick-VOD-downloader-desktop
+   cd Kick-VOD-downloader-desktop
    ```
 
 2. **Install dependencies**
 
    ```bash
    npm install
-
    ```
 
 3. **Run the app**
@@ -49,9 +47,9 @@ Kick.com Video Downloader is a cross-platform desktop application built with [El
 Soon
 
 ## TODO
- - [] Make the app run on linux and macOS
- - [] Add Quee for multiple downloads
- - [] Imporve Error handling  
+ - [ ] Make the app run on linux and macOS
+ - [ ] Add Quee for multiple downloads
+ - [ ] Imporve Error handling  
 
 ## Contributing
 Feel free to open issues or submit pull requests to improve this app.
