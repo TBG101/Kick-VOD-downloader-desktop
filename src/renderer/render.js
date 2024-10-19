@@ -7,8 +7,15 @@ const qualitySelectorElement = document.getElementById("quality-select");
 const progressPercentageElement = document.getElementById(
   "progress-percentage"
 );
-const startTime = document.getElementById("start-time");
-const endTime = document.getElementById("end-time");
+
+// input fields for start and end time
+const startTimeHour = document.getElementById("start_time_input_h");
+const startTimeMinute = document.getElementById("start_time_input_m");
+const startTimeSecond = document.getElementById("start_time_input_s");
+
+const endTimeHour = document.getElementById("end_time_input_h");
+const endTimeMinute = document.getElementById("end_time_input_m");
+const endTimeSecond = document.getElementById("end_time_input_s");
 
 const progressFill = document.querySelector(".progress-fill");
 
@@ -50,13 +57,43 @@ function fetchVideoData() {
   });
 }
 
+function checkTimeInputFormat() {
+  if (startTimeHour.value > 23) {
+    startTimeHour.value = 23;
+  }
+  if (startTimeMinute.value > 59) {
+    startTimeMinute.value = 59;
+  }
+  if (startTimeSecond.value > 59) {
+    startTimeSecond.value = 59;
+  }
+  if (endTimeHour.value > 23) {
+    endTimeHour.value = 23;
+  }
+  if (endTimeMinute.value > 59) {
+    endTimeMinute.value = 59;
+  }
+  if (endTimeSecond.value > 59) {
+    endTimeSecond.value = 59;
+  }
+}
+
 function downloadVideoFile() {
   console.log(currentVideo);
+  if (checkTimeInputFormat() === false) {
+    console.log("Uncorrect time input format");
+    // TODO handle exception here
+    return;
+  }
+
+  const startTime = `${startTimeHour.value}:${startTimeMinute.value}:${startTimeSecond.value}`;
+  const endTime = `${endTimeHour.value}:${endTimeMinute.value}:${endTimeSecond.value}`;
+
   const data = {
     video: currentVideo,
     quality: qualitySelectorElement.value,
-    startTime: startTime.value,
-    endTime: endTime.value,
+    startTime: startTime,
+    endTime: endTime,
   };
   console.log("Data to send from UI: ", data);
 

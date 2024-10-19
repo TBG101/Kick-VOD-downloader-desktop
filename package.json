@@ -2,15 +2,18 @@
   "name": "kickdownloaderwindows",
   "version": "1.0.0",
   "description": "",
-  "main": "dist/main/index.js",
+  "main": "./dist/main/index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "tsc && electron .",
-    "watch": "tsc --watch"
+    "build": "tsc",
+    "watch": "tsc --watch",
+    "package": "tsc && electron-packager . kickdownloaderwindows --platform=win32 --arch=x64 --out=./build/ --overwrite"
   },
   "author": "",
   "license": "ISC",
   "devDependencies": {
+    "@electron/packager": "^18.3.5",
     "@types/electron": "^1.6.10",
     "@types/node": "^22.5.5",
     "electron": "^32.1.0",
