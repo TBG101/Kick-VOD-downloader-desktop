@@ -8,7 +8,8 @@
     "start": "tsc && electron .",
     "build": "tsc",
     "watch": "tsc --watch",
-    "package": "tsc && electron-packager . kickdownloaderwindows --platform=win32 --arch=x64 --out=./build/ --overwrite"
+    "package": "tsc && electron-packager . kickdownloaderwindows --platform=win32 --arch=x64 --out=./build/ --overwrite",
+    "builder": "tsc && electron-builder"
   },
   "author": "",
   "license": "ISC",
@@ -17,6 +18,7 @@
     "@types/electron": "^1.6.10",
     "@types/node": "^22.5.5",
     "electron": "^32.1.0",
+    "electron-builder": "^25.1.8",
     "typescript": "^5.6.2"
   },
   "dependencies": {
